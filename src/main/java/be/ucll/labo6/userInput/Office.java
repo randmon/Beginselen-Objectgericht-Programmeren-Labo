@@ -2,24 +2,22 @@ package be.ucll.labo6.userInput;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 public class Office {
 
     private List<Patient> lijstPatienten = new ArrayList<>();
-    private int id;
+    private final int id;
 
     public Office(int id) {
         this.id = id;
     }
 
     public void addPatient(Patient p) {
-        if (lijstPatienten.size() == 5) {
-            throw new IllegalArgumentException("Je lijst is vol!");
+        if (!isFull() && !lijstPatienten.contains(p)){
+            lijstPatienten.add(p);
+            System.out.println("    "+p + " added to " + this);
         }
-        if (lijstPatienten.contains(p)) {
-            throw new IllegalArgumentException(p + " zit al in deze lijst!");
-        }
-        lijstPatienten.add(p);
     }
 
     public void printLijst() {
@@ -40,8 +38,16 @@ public class Office {
         return id;
     }
 
+    public boolean isFull(){
+        return lijstPatienten.size() == 5;
+    }
+
     @Override
     public String toString() {
         return "Office (ID: " + id + ")";
+    }
+
+    //INPUT
+    public static void createNewOffice(Scanner scanner, int nextIDO) {
     }
 }

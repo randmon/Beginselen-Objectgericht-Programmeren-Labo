@@ -1,13 +1,17 @@
 package be.ucll.labo6.userInput;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.Scanner;
 
 public class Patient {
     private String naam, voornaam;
-    private Date geboortedatum;
-    private int gewicht, bmi, id;
+    private LocalDate geboortedatum;
+    private final DateTimeFormatter dtFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+    private int gewicht;
+    private int bmi;
+    private final int id;
     private double lengte;
 
     /** Constructor
@@ -16,87 +20,154 @@ public class Patient {
         int gewichtKG - patient's weight in kilograms
         double lengteCM - patient's height in centimeters
      */
-    public Patient(String naam, String voornaam, String geboortedatumddMMYY, int gewichtKG, double lengteCM, int id) {
-        setNaam(naam);
-        setVoornaam(voornaam);
-        setGeboortedatum(geboortedatumddMMYY);
-        setGewicht(gewichtKG);
-        setLengte(lengteCM);
-
-        this.id = id;
-
+    public Patient(Scanner scanner, int id) {
+        setNaam(scanner);
+        setVoornaam(scanner);
+        setGeboortedatum(scanner);
+        setGewicht(scanner);
+        setLengte(scanner);
         calculateBMI();
+        this.id = id;
     }
 
-    /* setNaam - sets naam, can't be empty*/
-    public void setNaam(String naam) {
-        this.naam = naam;
-    }
-
-    /* setNaam - sets name, can't be empty*/
-    public void setVoornaam(String voornaam) {
-        this.voornaam = voornaam;
-    }
-
-    public static void checkNaam(String naam) throws EmptyFieldException{
-        if (naam == null || naam.trim().isEmpty()) {
-            throw new EmptyFieldException();
+    private void setNaam(Scanner scanner) {
+        String fn;
+        while (true) {
+            try {
+                System.out.print("\rFirst name: ");
+                fn = scanner.next();
+                checkNotEmpty(fn);
+                this.naam = fn;
+                break;
+            } catch (EmptyFieldException e) {
+                System.out.println("Name can't be empty!");
+            }
         }
     }
 
+    private void setVoornaam(Scanner scanner) {
+        String ln;
+        while (true) {
+            try {
+                System.out.print("\rLast name: ");
+                ln = scanner.next();
+                checkNotEmpty(ln);
+                this.voornaam = ln;
+                break;
+            } catch (EmptyFieldException e) {
+                System.out.println("Name can't be empty!");
+            }
+        }
+    }
+
+    //GEBOORTEDATUM
     /* setGeboortedatum - sets birthdate*/
-    public void setGeboortedatum(String geboortedatumString) {
-        try {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-            geboortedatum = dateFormat.parse(geboortedatumString);
-
-        } catch (ParseException e) {
-            System.out.println("How did we get here?");
+    private void setGeboortedatum(Scanner scanner){
+        LocalDate gdDate;
+        String gdString;
+        while (true) {
+            try {
+                System.out.print("\rBirthdate (dd-MM-YYYY): ");
+                gdString = scanner.next();
+                checkNotEmpty(gdString);
+                gdDate = checkFormat(gdString);
+                checkNotFuture(gdDate);
+                geboortedatum = gdDate;
+                break;
+            } catch (EmptyFieldException e) {
+                System.out.println("Date can't be empty!");
+            } catch (DateTimeParseException e) {
+                System.out.println("Invalid birthdate format!");
+            } catch (FutureDateException e) {
+                System.out.println("Date can't be in the future!");
+            }
         }
     }
 
-    public static void checkDate(String geboortedatumString) throws ParseException, EmptyFieldException, IllegalArgumentException{
-        if (geboortedatumString == null || geboortedatumString.trim().isEmpty()) {
-            throw new EmptyFieldException();
+    //GEWICHT, LENGTE EN BMI
+    public void setGewicht(Scanner scanner) {
+        int g;
+        while (true) {
+            try {
+                System.out.print("\rWeight (kg): ");
+                g = Integer.parseInt(scanner.next());
+                checkNotNegative(g);
+                this.gewicht = g;
+                break;
+            } catch (IllegalArgumentException e) {
+                System.out.println("Weight has to be a positive number!");
+            }
         }
+    }
 
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-        Date now = new Date();
-        dateFormat.format(now);
-        Date dateTry = dateFormat.parse(geboortedatumString);
-
-        if (now.compareTo(dateTry) < 0) {
-            throw new IllegalArgumentException();
+    public void setLengte(Scanner scanner) {
+        double l;
+        while (true) {
+            try {
+                System.out.print("\rHeight (cm): ");
+                l = Integer.parseInt(scanner.next());
+                checkNotNegative((int) l);
+                this.lengte = l/100;
+                break;
+            } catch (IllegalArgumentException e) {
+                System.out.println("Height has to be a positive number!");
+            }
         }
     }
 
-
-
-    /* setGewicht - sets weight, must be greater than 0*/
-    public void setGewicht(int gewicht) {
-        if (gewicht < 0) { throw new IllegalArgumentException("Gewicht moet positief zijn!");}
-        this.gewicht = gewicht;
-    }
-
-    /* setLengte - must be greater than 0*/
-    public void setLengte(double lengte) {
-        if (lengte < 0) { throw new IllegalArgumentException("Lengte moet positief zijn!");}
-        this.lengte = lengte/100;
-    }
-
-    @Override
-    public String toString() {
-        return voornaam + " " + naam + " (ID: " + id + ")";
-    }
-
-    //Calculates bmi and rounds it to a whole number
-    //This always gives a valid value because we verify weight and height before
     public void calculateBMI() {
         bmi = (int) Math.round(gewicht / (lengte * lengte));
     }
 
+    //GETTERS
+    public String getNaam() {
+        return naam;
+    }
+    public String getVoornaam() {
+        return voornaam;
+    }
+    public String getGeboortedatumString() {
+        return geboortedatum.format(dtFormatter);
+    }
+    public int getGewicht() {
+        return gewicht;
+    }
+    public double getLengte() {
+        return lengte;
+    }
     public int getId() {
         return id;
     }
+    public int getBmi() {
+        return bmi;
+    }
+    @Override
+    public String toString() {
+        return naam + " " + voornaam + " (ID: " + id + ")";
+    }
 
+    //VALIDATION METHODS
+    private void checkNotEmpty(String input) throws EmptyFieldException {
+        if (input == null || input.trim().isEmpty()) {
+            throw new EmptyFieldException();
+        }
+    }
+
+    private void checkNotNegative(int input) throws IllegalArgumentException {
+        if (input < 0) {
+            throw new IllegalArgumentException();
+        }
+    }
+
+    //Attempts to parse the String into a LocalDate according to our format
+    private LocalDate checkFormat(String bdString) throws DateTimeParseException{
+        return LocalDate.parse(bdString, dtFormatter);
+    }
+
+    //Throws IllegalArgumentException if date is in the future
+    private void checkNotFuture(LocalDate temp) throws FutureDateException {
+        if (LocalDate.now().compareTo(temp) < 0) {
+            throw new FutureDateException();
+        }
+    }
 }
